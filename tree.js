@@ -66,7 +66,7 @@ export default class Tree {
     }
 
     findMin(node) {
-        while (node.left){
+        while (node.left) {
             node = node.left;
         }
         return node;
@@ -80,23 +80,163 @@ export default class Tree {
         if (!this.root) return null;
 
         if (key < root.data) {
-            root.left = this.deleteNode(root.left,key);
-        }else if(key > root.data){
-            root.right = this.deleteNode(root.right,key)
-        }else{
-            if(!root.left && !root.right){
+            root.left = this.deleteNode(root.left, key);
+        } else if (key > root.data) {
+            root.right = this.deleteNode(root.right, key)
+        } else {
+            if (!root.left && !root.right) {
                 return null
             }
 
-            if(!root.left) return root.right;
-            if(!root.right) return root.left;
+            if (!root.left) return root.right;
+            if (!root.right) return root.left;
 
             const successor = this.findMin(root.right)
             root.data = successor.data;
-            root.right = this.deleteNode(root.right,successor.data)
+            root.right = this.deleteNode(root.right, successor.data)
         }
 
         return root;
+    }
+
+    find(value) {
+        let current = this.root;
+        while (current) {
+            if (value === current.data) {
+                return current;
+            }
+            if (value < current.data) {
+                current = current.left;
+            }
+            else {
+                current = current.right;
+            }
+        }
+        return null;
+    }
+
+    levelOrder(callback) {
+        if (typeof callback !== 'function') {
+            throw new Error("Callback must be a function")
+        }
+
+        if (!this.root) return;
+
+        const queue = [this.root];
+
+        while (queue.length > 0) {
+            const node = queue.shift();
+            callback(node);
+
+            if (node.left) queue.push(node.left);
+            if (node.right) queue.push(node.right);
+        }
+    }
+
+    // levelOrder(callback) {           recursive version
+    //     if (typeof callback !== 'function') {
+    //         throw new Error("Callback is not a function!");
+    //     }
+
+    //     const traversal = (queue) => {
+    //         if (queue.length === 0) return;
+
+    //         const node = queue.shift();
+    //         callback(node);
+
+    //         if (node.left) queue.push(node.left);
+    //         if (node.right) queue.push(node.right);
+
+    //         traversal(queue);
+
+    //     }
+    //     if (!this.root) return;
+    //     traversal([this.root])
+    // }
+
+    inOrder(callback) {
+        if (typeof callback !== 'function') {
+            throw new Error("Callback is not a function");
+        }
+
+        const traversal = (node) => {
+            if (!node) return;
+            traversal(node.left);
+            callback(node);
+            traversal(node.right);
+        }
+        traversal(this.root)
+    }
+
+    preOrder(callback) {
+        if (typeof callback !== 'function') {
+            throw new Error("Callback is not a function");
+        }
+
+        const traversal = (node) => {
+            if (!node) return;
+            callback(node);
+            traversal(node.left);
+            traversal(node.right);
+        }
+        traversal(this.root)
+
+    }
+
+    postOrder(callback) {
+        if (typeof callback !== 'function') {
+            throw new Error("Callback is not a function");
+        }
+
+        const traversal = (node) => {
+            if (!node) return;
+            traversal(node.left);
+            traversal(node.right);
+            callback(node);
+        }
+        traversal(this.root)
+    }
+
+    height(node = this.root) {
+        if (!node) return -1;
+        const leftHeight = this.height(node.left);
+        const rightHeight = this.height(node.right);
+        return Math.max(leftHeight, rightHeight) + 1;
+    }
+
+    depth(node) {
+        if (!node) return -1;;
+        let edges = 0;
+        let current = node;
+        while (current !== this.root) {
+            edges++;
+            current = this.#findParent(current)
+        }
+        return edges;
+    }
+
+    #findParent(targetNode, current = this.root) { // helper for depth method
+        if (!current) return null;
+        if (current.left === targetNode || current.right === targetNode) {
+            return current;
+        }
+        return targetNode.data < current.data
+            ? this.#findParent(targetNode, current.left)
+            : this.#findParent(targetNode, current.right);
+    }
+
+    isBalanced(node = this.root) {
+        if (!node) return true;
+        const leftHeight = this.height(node.left);
+        const rightHeight = this.height(node.right);
+        return Math.abs(leftHeight - rightHeight) <= 1 && this.isBalanced(node.left) && this.isBalanced(node.right)
+    }
+
+    rebalance() {
+        if (!this.root) return null;
+        const arr = [];
+        this.inOrder(node => arr.push(node.data));
+        this.root = this.buildTree(arr)
     }
 
     prettyPrint(node, prefix = "", isLeft = true) {
